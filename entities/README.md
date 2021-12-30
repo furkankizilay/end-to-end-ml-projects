@@ -89,27 +89,27 @@
 **We should remove outliers per location using mean and one standard deviation**
 
     def remove_pps_outliers(df) :
-    df_out = pd.DataFrame()
-    for key, subdf in df.groupby("location_id") :
-        m = np.mean(subdf.price_per_sqft)
-        st = np.std(subdf.price_per_sqft)
-        reduced_df = subdf[(subdf.price_per_sqft>(m-st)) & (subdf.price_per_sqft <= (m+st))]
-        df_out = pd.concat([df_out, reduced_df], ignore_index = True)
-    return df_out
+        df_out = pd.DataFrame()
+        for key, subdf in df.groupby("location_id") :
+            m = np.mean(subdf.price_per_sqft)
+            st = np.std(subdf.price_per_sqft)
+            reduced_df = subdf[(subdf.price_per_sqft>(m-st)) & (subdf.price_per_sqft <= (m+st))]
+            df_out = pd.concat([df_out, reduced_df], ignore_index = True)
+        return df_out
     df5 = remove_pps_outliers(df4)
 
 **Let's check if for a given location how does the 2 baths and 3 baths property prices look like**
 
     def plot_scatter_chart(df,location) :
-    bath2 = df[(df.location_id == location) & (df.baths < 3)]
-    bath3 = df[(df.location_id == location) & (df.baths >= 3)]
-    matplotlib.rcParams["figure.figsize"] = (15,10)
-    plt.scatter(bath2.Total_Area, bath2.price, color = "blue", label = "2 baths", s = 50)
-    plt.scatter(bath3.Total_Area, bath3.price, marker = "+", color = "green", label = "3 baths", s = 50)
-    plt.xlabel("Total Square Feet Area")
-    plt.ylabel("Price")
-    plt.title(location)
-    plt.legend()
+        bath2 = df[(df.location_id == location) & (df.baths < 3)]
+        bath3 = df[(df.location_id == location) & (df.baths >= 3)]
+        matplotlib.rcParams["figure.figsize"] = (15,10)
+        plt.scatter(bath2.Total_Area, bath2.price, color = "blue", label = "2 baths", s = 50)
+        plt.scatter(bath3.Total_Area, bath3.price, marker = "+", color = "green", label = "3 baths", s = 50)
+        plt.xlabel("Total Square Feet Area")
+        plt.ylabel("Price")
+        plt.title(location)
+        plt.legend()
     
     plot_scatter_chart(df5, 5)
 
@@ -118,20 +118,20 @@
 **Now we can remove those 2 baths apartments whose price_per_sqft is less than mean price_per_sqft of 1 baths apartment**
 
     def remove_baths_outliers(df) :
-    exclude_indices = np.array([])
-    for location, location_df in df.groupby("location_id") :
-        baths_stats = {}
-        for baths, baths_df in location_df.groupby("baths") :
-            baths_stats[baths] = {
-                "mean" : np.mean(baths_df.price_per_sqft),
-                "std" : np.std(baths_df.price_per_sqft),
-                "count" : baths_df.shape[0]
-            }
-        for baths, baths_df in location_df.groupby("baths"):
-            stats = baths_stats.get(baths - 1)
-            if stats and stats["count"]> 5 :
-                exclude_indices = np.append(exclude_indices, baths_df[baths_df.price_per_sqft<(stats["mean"])].index.values)
-    return df.drop(exclude_indices, axis="index")
+        exclude_indices = np.array([])
+        for location, location_df in df.groupby("location_id") :
+            baths_stats = {}
+            for baths, baths_df in location_df.groupby("baths") :
+                baths_stats[baths] = {
+                    "mean" : np.mean(baths_df.price_per_sqft),
+                    "std" : np.std(baths_df.price_per_sqft),
+                    "count" : baths_df.shape[0]
+                }
+            for baths, baths_df in location_df.groupby("baths"):
+                stats = baths_stats.get(baths - 1)
+                if stats and stats["count"]> 5 :
+                    exclude_indices = np.append(exclude_indices, baths_df[baths_df.price_per_sqft<(stats["mean"])].index.values)
+        return df.drop(exclude_indices, axis="index")
     df6 = remove_baths_outliers(df5)
 
 **Plot same scatter chart again to visualize price_per_sqft for 2 baths and 3 baths properties**
@@ -146,18 +146,18 @@
     df7 = df6.copy()
 
     for column in label_list :
-    for location_id in df7["location_id"].unique() :
-        selected_location = df7[df7["location_id"] == location_id]
-        selected_column = selected_location[column]
-        
-        std = selected_column.std()
-        avg = selected_column.mean()
-        
-        three_sigma_plus = avg + (std*3)
-        three_sigma_minus = avg - (std*3)
-        
-        outliers = selected_column[(selected_location[column] > three_sigma_plus) | (selected_location[column] < three_sigma_minus)].index
-        df7.drop(index = outliers, inplace = True)
+        for location_id in df7["location_id"].unique() :
+            selected_location = df7[df7["location_id"] == location_id]
+            selected_column = selected_location[column]
+            
+            std = selected_column.std()
+            avg = selected_column.mean()
+            
+            three_sigma_plus = avg + (std*3)
+            three_sigma_minus = avg - (std*3)
+            
+            outliers = selected_column[(selected_location[column] > three_sigma_plus) | (selected_location[column] < three_sigma_minus)].index
+            df7.drop(index = outliers, inplace = True)
 
 <br />
 
@@ -318,15 +318,15 @@
     from xgboost import XGBRegressor
 
     def compML(df, alg) :
-    X = df.drop(["price"], axis="columns")
-    y = df.price
-    X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.2,random_state=10)
-    
-    
-    model = alg().fit(X_train, y_train)
-    y_pred=model.predict(X_test)
-    model_name = alg.__name__
-    print(model_name,":", (r2_score(y_test,y_pred)))
+        X = df.drop(["price"], axis="columns")
+        y = df.price
+        X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.2,random_state=10)
+        
+        
+        model = alg().fit(X_train, y_train)
+        y_pred=model.predict(X_test)
+        model_name = alg.__name__
+        print(model_name,":", (r2_score(y_test,y_pred)))
 
     models = [LGBMRegressor,
          XGBRegressor,
@@ -336,6 +336,6 @@
          KNeighborsRegressor,]
 
     for i in models :
-    compML(df10, i)
+        compML(df10, i)
 
 ![](screenshots/compML.png)
